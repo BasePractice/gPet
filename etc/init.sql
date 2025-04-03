@@ -1,2 +1,3 @@
 CREATE DATABASE pet WITH ENCODING = "UTF-8";
+\c pet;
 CREATE SCHEMA class;

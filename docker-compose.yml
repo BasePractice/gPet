@@ -51,4 +51,4 @@ services:
     ports:
       - "51051:51051"
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres-db:5432/pet?sslmode=disable&currentSchema=class
+      DATABASE_URL: postgres://postgres:postgres@postgres-db:5432/pet?sslmode=disable&search_path=class

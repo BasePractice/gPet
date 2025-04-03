@@ -18,6 +18,7 @@ var (
 
 type service struct {
 	class.UnimplementedServiceServer
+	db DatabaseClass
 }
 
 func (s *service) Information(_ context.Context, request *class.InformationRequest) (*class.InformationReply, error) {
@@ -32,7 +33,8 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
-	class.RegisterServiceServer(grpcServer, &service{})
+	server := &service{db: NewDatabaseClass()}
+	class.RegisterServiceServer(grpcServer, server)
 	log.Printf("server listening at %v", listen.Addr())
 	if err := grpcServer.Serve(listen); err != nil {
 		log.Fatalf("failed to serve: %v", err)
