@@ -4,7 +4,9 @@ import "os"
 
 var (
 	PostgresUrl = resolveEnvironment("DATABASE_URL",
-		"postgres://postgres:postgres@postgres-db:5432/unknown?sslmode=disable&search_path=unknown")
+		"postgres://postgres:postgres@local:25432/pet?sslmode=disable&search_path=public")
+	RedisUrl = resolveEnvironment("REDIS_URL",
+		"redis://localhost:6379/10?protocol=3")
 )
 
 func resolveEnvironment(key, defaultValue string) string {

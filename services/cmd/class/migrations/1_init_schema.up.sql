@@ -3,7 +3,7 @@ CREATE TABLE classes
     id         SERIAL    NOT NULL,
     name       VARCHAR   NOT NULL,
     table_name VARCHAR   NOT NULL,                                                                  -- Values table name
-    current    INTEGER                                                                   DEFAULT 0, -- Current version
+    current    INTEGER                                                                   DEFAULT 1, -- Current version
     status     VARCHAR   NOT NULL CHECK ( status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED') ) DEFAULT 'DRAFT',
     title      VARCHAR                                                                   DEFAULT NULL,
     updated_at TIMESTAMP NOT NULL                                                        DEFAULT CURRENT_TIMESTAMP,
@@ -17,7 +17,7 @@ CREATE TABLE class_sex
     id         SERIAL    NOT NULL,
     key        VARCHAR   NOT NULL,
     value      VARCHAR   NOT NULL,
-    version    INTEGER   NOT NULL                                                    DEFAULT 0,
+    version    INTEGER   NOT NULL                                                    DEFAULT 1,
     status     VARCHAR   NOT NULL CHECK ( status IN ('DRAFT', 'PUBLISHED', 'SKIP') ) DEFAULT 'DRAFT',
     before_at  TIMESTAMP                                                             DEFAULT NULL,
     after_at   TIMESTAMP                                                             DEFAULT CURRENT_TIMESTAMP,

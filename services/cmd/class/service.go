@@ -5,11 +5,13 @@ import (
 	"log"
 
 	"pet/middleware/class"
+	"pet/services"
 )
 
 type service struct {
 	class.UnimplementedServiceServer
-	db DatabaseClass
+	db    DatabaseClass
+	cache services.Cache
 }
 
 func (s *service) Classes(_ context.Context, request *class.ClassRequest) (*class.ClassReply, error) {

@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"pet/middleware/class"
+	"pet/services"
 
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
@@ -27,7 +28,8 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
-	server := &service{db: NewDatabaseClass()}
+	cache, _ := services.NewDefaultCache()
+	server := &service{db: NewDatabaseClass(), cache: cache}
 	class.RegisterServiceServer(grpcServer, server)
 	log.Printf("server listening at %v", listen.Addr())
 	if err := grpcServer.Serve(listen); err != nil {
