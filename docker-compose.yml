@@ -52,4 +52,4 @@ services:
       - "51051:51051"
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres-db:5432/pet?sslmode=disable&search_path=class
-      REDIS_URL: redis://redis:6379/10?protocol=3
+      REDIS_URL: redis://redis:6379/10?protocol=3&max_retries=5

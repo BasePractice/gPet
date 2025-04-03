@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -42,7 +43,12 @@ func NewRedisCache() (Cache, error) {
 	if err = errors.Join(redisotel.InstrumentTracing(client), redisotel.InstrumentMetrics(client)); err != nil {
 		log.Println(err)
 	}
-	return &redisCache{client, context.Background()}, nil
+	ctx := context.Background()
+	if err = client.Ping(ctx).Err(); err != nil {
+		fmt.Printf("failed to connect to redis server: %s\n", err.Error())
+		return nil, err
+	}
+	return &redisCache{client, ctx}, nil
 }
 
 func NewDefaultCache() (Cache, error) {
