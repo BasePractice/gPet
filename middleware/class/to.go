@@ -39,6 +39,7 @@ func ElementStatusFromSql(key string) ClassElementStatus {
 	}
 }
 
+//goland:noinspection GoNameStartsWithPackageName
 func ClassStatusFromSql(key string) ClassStatus {
 	switch key {
 	case "DRAFT":

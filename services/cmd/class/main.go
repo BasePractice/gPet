@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -28,7 +29,7 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
-	cache, _ := services.NewDefaultCache()
+	cache, _ := services.NewDefaultCache(context.Background())
 	server := &service{db: NewDatabaseClass(), cache: cache}
 	class.RegisterServiceServer(grpcServer, server)
 	log.Printf("server listening at %v", listen.Addr())
