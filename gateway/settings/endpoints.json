@@ -1,0 +1,13 @@
+{
+  "simp_v1": [
+    {
+      "name": "get_file_open_link",
+      "endpoint": "/v1/files/open-link/{id}",
+      "backend": "grpc://class:51051",
+      "path": "/files/open-link/{id}",
+      "method": "GET",
+      "output_encoding": "no-op",
+      "encoding": "no-op"
+    }
+  ]
+}

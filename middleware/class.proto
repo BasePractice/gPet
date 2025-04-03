@@ -1,0 +1,18 @@
+//edition = "2023";
+syntax = "proto3";
+
+option go_package = "middleware/class";
+
+package class;
+
+message InformationRequest {
+  uint32 version = 1;
+}
+
+message InformationReply {
+  uint32 version = 1;
+}
+
+service Service {
+  rpc Information(InformationRequest) returns (InformationReply);
+}

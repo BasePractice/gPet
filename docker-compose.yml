@@ -1,0 +1,54 @@
+services:
+  gateway:
+    image: devopsfaith/krakend:watch
+    environment:
+      - FC_ENABLE=1
+      - FC_TEMPLATES=/etc/krakend/templates
+      - FC_SETTINGS=/etc/krakend/settings
+      - FC_PARTIALS=/etc/krakend/partials
+      - FC_OUT=/etc/krakend/krakend.compiled.json
+    volumes:
+      - ${SOURCES_DIRECTORY}/gateway:/etc/krakend
+    ports:
+      - "8080:8080"
+      - "8090:8090"
+    command: [ "run", "-d", "-c", "/etc/krakend/krakend.tmpl" ]
+  postgres-db:
+    image: postgres
+    restart: always
+    ports:
+      - '25432:5432'
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ${VOLUME_DIRECTORY}/.pg:/var/lib/postgresql/data
+      - ${SOURCES_DIRECTORY}/etc/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: 'redis:latest'
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: 'redis-cli ping || exit 1'
+      interval: 5s
+      timeout: 5s
+      retries: 3
+  class:
+    image: pet/class:latest
+    platform: linux/amd64
+    build:
+      context: ./
+      dockerfile: ./services/cmd/class/Dockerfile
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "51051:51051"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres-db:5432/pet?sslmode=disable&currentSchema=class
