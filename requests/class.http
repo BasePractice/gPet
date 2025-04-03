@@ -1,8 +1,6 @@
-### Information
-GRPC {{class-url}}/class.Service/Information
+### Classes
+GRPC {{class-url}}/class.Service/Classes
 Content-Type: application/json
 
-{
-  "version": 1
-}
+{}
 

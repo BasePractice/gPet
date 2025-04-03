@@ -4,6 +4,7 @@ go 1.24.1
 
 require (
 	github.com/golang-migrate/migrate/v4 v4.18.2
+	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	google.golang.org/grpc v1.71.1
 	google.golang.org/protobuf v1.36.6

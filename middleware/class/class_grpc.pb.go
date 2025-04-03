@@ -21,14 +21,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Service_Information_FullMethodName = "/class.Service/Information"
+	Service_Classes_FullMethodName  = "/class.Service/Classes"
+	Service_Elements_FullMethodName = "/class.Service/Elements"
 )
 
 // ServiceClient is the client API for Service service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ServiceClient interface {
-	Information(ctx context.Context, in *InformationRequest, opts ...grpc.CallOption) (*InformationReply, error)
+	Classes(ctx context.Context, in *ClassRequest, opts ...grpc.CallOption) (*ClassReply, error)
+	Elements(ctx context.Context, in *ClassElementRequest, opts ...grpc.CallOption) (*ClassElementReply, error)
 }
 
 type serviceClient struct {
@@ -39,10 +41,20 @@ func NewServiceClient(cc grpc.ClientConnInterface) ServiceClient {
 	return &serviceClient{cc}
 }
 
-func (c *serviceClient) Information(ctx context.Context, in *InformationRequest, opts ...grpc.CallOption) (*InformationReply, error) {
+func (c *serviceClient) Classes(ctx context.Context, in *ClassRequest, opts ...grpc.CallOption) (*ClassReply, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(InformationReply)
-	err := c.cc.Invoke(ctx, Service_Information_FullMethodName, in, out, cOpts...)
+	out := new(ClassReply)
+	err := c.cc.Invoke(ctx, Service_Classes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serviceClient) Elements(ctx context.Context, in *ClassElementRequest, opts ...grpc.CallOption) (*ClassElementReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClassElementReply)
+	err := c.cc.Invoke(ctx, Service_Elements_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +65,8 @@ func (c *serviceClient) Information(ctx context.Context, in *InformationRequest,
 // All implementations must embed UnimplementedServiceServer
 // for forward compatibility.
 type ServiceServer interface {
-	Information(context.Context, *InformationRequest) (*InformationReply, error)
+	Classes(context.Context, *ClassRequest) (*ClassReply, error)
+	Elements(context.Context, *ClassElementRequest) (*ClassElementReply, error)
 	mustEmbedUnimplementedServiceServer()
 }
 
@@ -64,8 +77,11 @@ type ServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedServiceServer struct{}
 
-func (UnimplementedServiceServer) Information(context.Context, *InformationRequest) (*InformationReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Information not implemented")
+func (UnimplementedServiceServer) Classes(context.Context, *ClassRequest) (*ClassReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Classes not implemented")
+}
+func (UnimplementedServiceServer) Elements(context.Context, *ClassElementRequest) (*ClassElementReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Elements not implemented")
 }
 func (UnimplementedServiceServer) mustEmbedUnimplementedServiceServer() {}
 func (UnimplementedServiceServer) testEmbeddedByValue()                 {}
@@ -88,20 +104,38 @@ func RegisterServiceServer(s grpc.ServiceRegistrar, srv ServiceServer) {
 	s.RegisterService(&Service_ServiceDesc, srv)
 }
 
-func _Service_Information_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InformationRequest)
+func _Service_Classes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClassRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ServiceServer).Information(ctx, in)
+		return srv.(ServiceServer).Classes(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Service_Information_FullMethodName,
+		FullMethod: Service_Classes_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServiceServer).Information(ctx, req.(*InformationRequest))
+		return srv.(ServiceServer).Classes(ctx, req.(*ClassRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Service_Elements_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClassElementRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceServer).Elements(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Service_Elements_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceServer).Elements(ctx, req.(*ClassElementRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -114,8 +148,12 @@ var Service_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Information",
-			Handler:    _Service_Information_Handler,
+			MethodName: "Classes",
+			Handler:    _Service_Classes_Handler,
+		},
+		{
+			MethodName: "Elements",
+			Handler:    _Service_Elements_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

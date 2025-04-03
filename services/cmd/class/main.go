@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -9,6 +8,7 @@ import (
 
 	"pet/middleware/class"
 
+	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 )
 
@@ -16,18 +16,12 @@ var (
 	port = flag.Int("port", 51051, "The service port")
 )
 
-type service struct {
-	class.UnimplementedServiceServer
-	db DatabaseClass
-}
-
-func (s *service) Information(_ context.Context, request *class.InformationRequest) (*class.InformationReply, error) {
-	log.Printf("Received: %+v\n", request)
-	return &class.InformationReply{Version: 1}, nil
-}
-
 func main() {
 	flag.Parse()
+	err := godotenv.Load(".env", ".env.local")
+	if err != nil {
+		log.Println("Warning loading .env file")
+	}
 	listen, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
