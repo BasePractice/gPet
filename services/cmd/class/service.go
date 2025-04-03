@@ -12,62 +12,10 @@ type service struct {
 	db DatabaseClass
 }
 
-func classStatusOfString(key string) class.ClassStatus {
-	switch key {
-	case "DRAFT":
-		return class.ClassStatus_CLASS_DRAFT
-	case "PUBLISHED":
-		return class.ClassStatus_CLASS_PUBLISHED
-	case "ARCHIVED":
-		return class.ClassStatus_CLASS_ARCHIVED
-	default:
-		return class.ClassStatus_CLASS_NONE
-	}
-}
-
-func elementStatusOfString(key string) class.ClassElementStatus {
-	switch key {
-	case "DRAFT":
-		return class.ClassElementStatus_ITEM_DRAFT
-	case "PUBLISHED":
-		return class.ClassElementStatus_ITEM_PUBLISHED
-	case "SKIP":
-		return class.ClassElementStatus_ITEM_SKIP
-	default:
-		return class.ClassElementStatus_ITEM_NONE
-	}
-}
-
-func classStringOfStatus(key class.ClassStatus) string {
-	switch key {
-	case class.ClassStatus_CLASS_DRAFT:
-		return "DRAFT"
-	case class.ClassStatus_CLASS_PUBLISHED:
-		return "PUBLISHED"
-	case class.ClassStatus_CLASS_ARCHIVED:
-		return "ARCHIVED"
-	default:
-		return "NONE"
-	}
-}
-
-func elementStringOfStatus(key class.ClassElementStatus) string {
-	switch key {
-	case class.ClassElementStatus_ITEM_DRAFT:
-		return "DRAFT"
-	case class.ClassElementStatus_ITEM_PUBLISHED:
-		return "PUBLISHED"
-	case class.ClassElementStatus_ITEM_SKIP:
-		return "SKIP"
-	default:
-		return "NONE"
-	}
-}
-
 func (s *service) Classes(_ context.Context, request *class.ClassRequest) (*class.ClassReply, error) {
 	var status *string = nil
 	if request.Status != nil {
-		s2 := classStringOfStatus(request.GetStatus())
+		s2 := request.GetStatus().ToSql()
 		status = &s2
 	}
 	classes, err := s.db.Classes(request.NameFilter, status, request.Version)
@@ -83,7 +31,7 @@ func (s *service) Classes(_ context.Context, request *class.ClassRequest) (*clas
 		reply.Classes = append(reply.Classes, &class.Class{
 			Name:   element.Name,
 			Title:  element.Title,
-			Status: classStatusOfString(element.Status),
+			Status: class.ClassStatusFromSql(element.Status),
 		})
 	}
 	return &reply, nil
@@ -97,7 +45,7 @@ func (s *service) Elements(_ context.Context, request *class.ClassElementRequest
 	}
 	var status *string = nil
 	if request.Status != nil {
-		s2 := elementStringOfStatus(request.GetStatus())
+		s2 := request.GetStatus().ToSql()
 		status = &s2
 	}
 	var offset = 0
@@ -121,7 +69,7 @@ func (s *service) Elements(_ context.Context, request *class.ClassElementRequest
 		reply.Elements = append(reply.Elements, &class.ClassElement{
 			Key:     element.Key,
 			Value:   element.Value,
-			Status:  elementStatusOfString(element.Status),
+			Status:  class.ElementStatusFromSql(element.Status),
 			Version: element.Version,
 		})
 	}
