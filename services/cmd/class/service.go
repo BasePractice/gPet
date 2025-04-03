@@ -100,8 +100,17 @@ func (s *service) Elements(_ context.Context, request *class.ClassElementRequest
 		s2 := elementStringOfStatus(request.GetStatus())
 		status = &s2
 	}
-	elements, err := s.db.Elements(*c, request.Version, status)
+	var offset = 0
+	if request.Offset != nil {
+		offset = int(*request.Offset)
+	}
+	var limit = 100
+	if request.Limit != nil {
+		limit = int(*request.Limit)
+	}
+	elements, next, err := s.db.Elements(*c, request.Version, status, offset, limit)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	var reply class.ClassElementReply
@@ -116,5 +125,7 @@ func (s *service) Elements(_ context.Context, request *class.ClassElementRequest
 			Version: element.Version,
 		})
 	}
+	reply.NextOffset = uint32(next)
+	reply.Eof = len(elements) < limit
 	return &reply, nil
 }

@@ -55,6 +55,7 @@ message ClassElementReply {
   string name = 1;
   repeated ClassElement elements = 2;
   uint32 next_offset = 3;
+  bool eof = 4;
 }
 
 

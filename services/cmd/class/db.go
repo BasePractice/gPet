@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"embed"
 	"errors"
+	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"pet/services"
@@ -21,7 +23,7 @@ var migrations embed.FS
 type DatabaseClass interface {
 	Classes(nameFilter *string, status *string, version *uint32) ([]Class, error)
 	Class(name string) (*Class, error)
-	Elements(c Class, version *uint32, status *string) ([]Element, error)
+	Elements(c Class, version *uint32, status *string, offset, limit int) ([]Element, int, error)
 }
 
 type Class struct {
@@ -44,33 +46,35 @@ type ds struct {
 	db *sql.DB
 }
 
-func (d *ds) Elements(c Class, version *uint32, status *string) ([]Element, error) {
-	query := "SELECT key, value, version, status FROM class.$1 WHERE 1 = 1"
-	args := make([]interface{}, 1)
-	args[0] = c.TableName
+func (d *ds) Elements(c Class, version *uint32, status *string, offset, limit int) ([]Element, int, error) {
+	query := fmt.Sprintf("SELECT id, key, value, version, status FROM class.\"%s\" WHERE 1 = 1", c.TableName)
+	args := make([]interface{}, 0)
 	if status != nil {
-		query += " AND status  = $2"
+		query += " AND status  = $" + strconv.Itoa(len(args)+1)
 		args = append(args, *status)
 	}
 	if version != nil {
-		query += " AND version = $3"
+		query += " AND version = $" + strconv.Itoa(len(args)+1)
 		args = append(args, *version)
 	}
+	query += " ORDER BY id ASC OFFSET $" + strconv.Itoa(len(args)+1) + " LIMIT $" + strconv.Itoa(len(args)+2)
+	args = append(args, offset, limit)
 	rows, err := d.db.Query(query, args...)
 	if err != nil {
-		return nil, err
+		return nil, offset, err
 	}
 	defer rows.Close()
 	var elements []Element
+	var last = offset
 	for rows.Next() {
 		var element Element
-		err := rows.Scan(&element.Key, &element.Value, &element.Version, &element.Status)
+		err := rows.Scan(&last, &element.Key, &element.Value, &element.Version, &element.Status)
 		if err != nil {
-			return nil, err
+			return nil, offset, err
 		}
 		elements = append(elements, element)
 	}
-	return elements, nil
+	return elements, last, nil
 }
 
 func (d *ds) Class(name string) (*Class, error) {
@@ -95,15 +99,15 @@ func (d *ds) Classes(nameFilter *string, status *string, version *uint32) ([]Cla
 	query := "SELECT id, name, title, table_name, current, status, updated_at FROM class.classes WHERE 1 = 1"
 	args := make([]interface{}, 0)
 	if nameFilter != nil {
-		query += " AND name LIKE '%$1%'"
+		query += " AND name LIKE '%$" + strconv.Itoa(len(args)+1) + "%'"
 		args = append(args, *nameFilter)
 	}
 	if status != nil {
-		query += " AND status  = $2"
+		query += " AND status  = $" + strconv.Itoa(len(args)+1)
 		args = append(args, *status)
 	}
 	if version != nil {
-		query += " AND version = $3"
+		query += " AND version = $" + strconv.Itoa(len(args)+1)
 		args = append(args, *version)
 	}
 
@@ -112,7 +116,7 @@ func (d *ds) Classes(nameFilter *string, status *string, version *uint32) ([]Cla
 	if len(args) == 0 {
 		rows, err = d.db.Query(query)
 	} else {
-		rows, err = d.db.Query(query, args)
+		rows, err = d.db.Query(query, args...)
 	}
 	if err != nil {
 		return nil, err
@@ -141,7 +145,7 @@ func migrationScheme(db *sql.DB) {
 		log.Fatal(err)
 		return
 	}
-	instance, err := migrate.NewWithInstance("iofs", d, "tm", driver)
+	instance, err := migrate.NewWithInstance("iofs", d, "pet", driver)
 	if err != nil {
 		log.Fatal(err)
 		return
