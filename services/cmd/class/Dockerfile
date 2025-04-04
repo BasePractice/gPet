@@ -1,4 +1,4 @@
-FROM golang:1.24-alpine3.21
+FROM golang:1.24-alpine3.21 as builder
 LABEL authors="Pastor"
 
 WORKDIR app
@@ -7,7 +7,11 @@ COPY go.sum ./
 RUN go mod download
 RUN go mod tidy
 COPY . .
-RUN go build -o /class pet/services/cmd/class
+RUN CGO_ENABLED=0 go build -o /class -ldflags '-extldflags "-static"' pet/services/cmd/class
+
+FROM scratch
+COPY --from=builder /class /class
+
 EXPOSE 51051
 
 CMD ["/class"]

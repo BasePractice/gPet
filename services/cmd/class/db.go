@@ -5,6 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"log"
 	"strconv"
 	"time"
@@ -17,17 +18,59 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const (
+	sqlCreateClassTable = `
+CREATE TABLE %s
+(
+    id         UUID      NOT NULL                                                    DEFAULT gen_random_uuid(),
+    next       SERIAL    NOT NULL PRIMARY KEY,
+    key        VARCHAR   NOT NULL,
+    value      VARCHAR   NOT NULL,
+    version    INTEGER   NOT NULL                                                    DEFAULT 1,
+    status     VARCHAR   NOT NULL CHECK ( status IN ('DRAFT', 'PUBLISHED', 'SKIP') ) DEFAULT 'DRAFT',
+    before_at  TIMESTAMP                                                             DEFAULT NULL,
+    after_at   TIMESTAMP                                                             DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL                                                    DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL                                                    DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (key, value, version)
+)`
+	sqlCreateAfterInsertTrigger = `
+CREATE TRIGGER %s_after_insert
+    AFTER INSERT
+    ON %s
+    FOR EACH ROW
+EXECUTE FUNCTION fn_change_value_after_insert('%s');
+`
+	sqlCreateChangeStatusTrigger = `
+CREATE TRIGGER %s_after_update_status
+    AFTER UPDATE
+    ON %s
+    FOR EACH ROW
+    WHEN (NEW.status != OLD.status)
+EXECUTE FUNCTION fn_change_value_after_update_status('%s')
+`
+	sqlCreateAfterUpdateTrigger = `
+CREATE TRIGGER %s_after_update_after
+    AFTER UPDATE
+    ON %s
+    FOR EACH ROW
+    WHEN (NEW.after_at != OLD.after_at)
+EXECUTE FUNCTION fn_change_value_after_update_after('%s')
+`
+)
+
 //go:embed migrations/*.sql
 var migrations embed.FS
 
 type DatabaseClass interface {
 	Classes(nameFilter *string, status *string, version *uint32) ([]Class, error)
 	Class(name string) (*Class, error)
+	CreateClass(name, title string) error
 	Elements(c Class, version *uint32, status *string, offset, limit int) ([]Element, int, error)
 }
 
 type Class struct {
-	Id        int64     `sql:"id"`
+	Id        uuid.UUID `sql:"id"`
 	Name      string    `sql:"name"`
 	Title     string    `sql:"title"`
 	TableName string    `sql:"table_name"`
@@ -46,8 +89,42 @@ type ds struct {
 	db *sql.DB
 }
 
+func (d *ds) CreateClass(name, title string) error {
+	tableName := "class_" + name
+	tx, err := d.db.Begin()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(
+		"INSERT INTO class.classes(name, table_name, title) VALUES ($1, $2, $3)", name, tableName, title)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(fmt.Sprintf(sqlCreateClassTable, tableName))
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(fmt.Sprintf(sqlCreateAfterInsertTrigger, tableName, tableName, tableName))
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(fmt.Sprintf(sqlCreateChangeStatusTrigger, tableName, tableName, tableName))
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(fmt.Sprintf(sqlCreateAfterUpdateTrigger, tableName, tableName, tableName))
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (d *ds) Elements(c Class, version *uint32, status *string, offset, limit int) ([]Element, int, error) {
-	query := fmt.Sprintf("SELECT id, key, value, version, status FROM class.\"%s\" WHERE 1 = 1", c.TableName)
+	query := fmt.Sprintf("SELECT next, key, value, version, status FROM class.\"%s\" WHERE 1 = 1", c.TableName)
 	args := make([]interface{}, 0)
 	if status != nil {
 		query += " AND status  = $" + strconv.Itoa(len(args)+1)
@@ -57,7 +134,7 @@ func (d *ds) Elements(c Class, version *uint32, status *string, offset, limit in
 		query += " AND version = $" + strconv.Itoa(len(args)+1)
 		args = append(args, *version)
 	}
-	query += " ORDER BY id ASC OFFSET $" + strconv.Itoa(len(args)+1) + " LIMIT $" + strconv.Itoa(len(args)+2)
+	query += " ORDER BY next ASC OFFSET $" + strconv.Itoa(len(args)+1) + " LIMIT $" + strconv.Itoa(len(args)+2)
 	args = append(args, offset, limit)
 	rows, err := d.db.Query(query, args...)
 	if err != nil {
@@ -85,7 +162,7 @@ func (d *ds) Class(name string) (*Class, error) {
 	defer rows.Close()
 	var class Class
 	if rows.Next() {
-		err := rows.Scan(&class.Id, &class.Name, &class.Title, &class.TableName, &class.Current,
+		err = rows.Scan(&class.Id, &class.Name, &class.Title, &class.TableName, &class.Current,
 			&class.Status, &class.UpdatedAt)
 		if err != nil {
 			return nil, err
