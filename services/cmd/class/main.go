@@ -33,7 +33,9 @@ func main() {
 	}
 	grpcServer := grpc.NewServer()
 	cache, _ := services.NewDefaultCache(context.Background())
-	server := &service{db: NewDatabaseClass(), cache: cache}
+	db := NewDatabaseClass()
+	_ = db.CreateClass("main", "Main")
+	server := &service{db: db, cache: cache}
 	class.RegisterServiceServer(grpcServer, server)
 	slog.Debug("Server listening at ", slog.String("address", listen.Addr().String()))
 	if err = grpcServer.Serve(listen); err != nil {
