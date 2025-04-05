@@ -7,6 +7,8 @@ var (
 		"postgres://postgres:postgres@local:25432/pet?sslmode=disable&search_path=public")
 	RedisUrl = resolveEnvironment("REDIS_URL",
 		"redis://localhost:6379/10?protocol=3")
+	LogLevel = resolveEnvironment("LOG_LEVEL", "DEBUG")
+	LogFile  = resolveEnvironment("LOG_FILE", "")
 )
 
 func resolveEnvironment(key, defaultValue string) string {

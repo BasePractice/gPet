@@ -4,8 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
+	"os"
 
 	"pet/middleware/class"
 	"pet/services"
@@ -19,21 +20,23 @@ var (
 )
 
 func main() {
+	services.DefineLogging()
 	flag.Parse()
 	err := godotenv.Load(".env", ".env.local")
 	if err != nil {
-		log.Println("Warning loading .env file")
+		slog.Warn("Warning loading .env file", slog.String("error", err.Error()))
 	}
 	listen, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		slog.Error("Failed to listen", slog.String("error", err.Error()))
+		os.Exit(1)
 	}
 	grpcServer := grpc.NewServer()
 	cache, _ := services.NewDefaultCache(context.Background())
 	server := &service{db: NewDatabaseClass(), cache: cache}
 	class.RegisterServiceServer(grpcServer, server)
-	log.Printf("server listening at %v", listen.Addr())
-	if err := grpcServer.Serve(listen); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+	slog.Debug("Server listening at ", slog.String("address", listen.Addr().String()))
+	if err = grpcServer.Serve(listen); err != nil {
+		slog.Error("Failed to serve ", slog.String("error", err.Error()))
 	}
 }

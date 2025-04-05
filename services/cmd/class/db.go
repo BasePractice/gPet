@@ -5,7 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -68,7 +68,7 @@ func (d *ds) Elements(c Class, version *uint32, status *string, offset, limit in
 	var last = offset
 	for rows.Next() {
 		var element Element
-		err := rows.Scan(&last, &element.Key, &element.Value, &element.Version, &element.Status)
+		err = rows.Scan(&last, &element.Key, &element.Value, &element.Version, &element.Status)
 		if err != nil {
 			return nil, offset, err
 		}
@@ -85,7 +85,7 @@ func (d *ds) Class(name string) (*Class, error) {
 	defer rows.Close()
 	var class Class
 	if rows.Next() {
-		err := rows.Scan(&class.Id, &class.Name, &class.Title, &class.TableName, &class.Current,
+		err = rows.Scan(&class.Id, &class.Name, &class.Title, &class.TableName, &class.Current,
 			&class.Status, &class.UpdatedAt)
 		if err != nil {
 			return nil, err
@@ -125,7 +125,7 @@ func (d *ds) Classes(nameFilter *string, status *string, version *uint32) ([]Cla
 	result := make([]Class, 0)
 	for rows.Next() {
 		var class Class
-		err := rows.Scan(&class.Id, &class.Name, &class.Title, &class.TableName, &class.Current,
+		err = rows.Scan(&class.Id, &class.Name, &class.Title, &class.TableName, &class.Current,
 			&class.Status, &class.UpdatedAt)
 		if err != nil {
 			return nil, err
@@ -138,21 +138,21 @@ func (d *ds) Classes(nameFilter *string, status *string, version *uint32) ([]Cla
 func migrationScheme(db *sql.DB) {
 	d, err := iofs.New(migrations, "migrations")
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Can't open migration resource", slog.String("error", err.Error()))
 	}
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Can't create postgres instance", slog.String("error", err.Error()))
 		return
 	}
 	instance, err := migrate.NewWithInstance("iofs", d, "pet", driver)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Can't create migration", slog.String("error", err.Error()))
 		return
 	}
 	err = instance.Up()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		log.Fatal(err)
+		slog.Error("Can't up migration", slog.String("error", err.Error()))
 		return
 	}
 }
@@ -160,7 +160,7 @@ func migrationScheme(db *sql.DB) {
 func NewDatabaseClass() DatabaseClass {
 	db, err := sql.Open("postgres", services.PostgresUrl)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Can't open postgres connection", slog.String("error", err.Error()))
 		return nil
 	}
 	migrationScheme(db)

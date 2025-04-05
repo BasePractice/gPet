@@ -3,8 +3,7 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/redis/go-redis/extra/redisotel/v9"
@@ -30,14 +29,15 @@ func (c *redisCache) Get(ctx context.Context, key string) (string, error) {
 func NewRedisCache(ctx context.Context) (Cache, error) {
 	options, err := redis.ParseURL(RedisUrl)
 	if err != nil {
+		slog.Error("Failed parse URL", slog.String("error", err.Error()))
 		return nil, err
 	}
 	client := redis.NewClient(options)
 	if err = errors.Join(redisotel.InstrumentTracing(client), redisotel.InstrumentMetrics(client)); err != nil {
-		log.Println(err)
+		slog.Error("Can't create instrument tracing", slog.String("error", err.Error()))
 	}
 	if err = client.Ping(ctx).Err(); err != nil {
-		fmt.Printf("failed to connect to redis server: %s\n", err.Error())
+		slog.Error("Failed to connect to redis server", slog.String("error", err.Error()))
 		return nil, err
 	}
 	return &redisCache{client}, nil
