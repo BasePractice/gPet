@@ -4,6 +4,10 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"time"
+
+	"github.com/lmittmann/tint"
+	"github.com/mattn/go-colorable"
 )
 
 func DefineLogging() *slog.Logger {
@@ -20,6 +24,12 @@ func DefineLogging() *slog.Logger {
 		} else {
 			log.Fatal(err)
 		}
+	} else if LogColor != "" {
+		handler = tint.NewHandler(colorable.NewColorable(os.Stdout), &tint.Options{
+			Level:      level,
+			TimeFormat: time.DateTime,
+			AddSource:  true,
+		})
 	}
 	logger := slog.New(handler)
 	slog.SetDefault(logger)

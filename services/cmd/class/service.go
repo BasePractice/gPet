@@ -23,7 +23,7 @@ func (s *service) Classes(_ context.Context, request *class.ClassRequest) (*clas
 	}
 	classes, err := s.db.Classes(request.NameFilter, status, request.Version)
 	if err != nil {
-		slog.Error("Get classes error", slog.String("error", err.Error()))
+		slog.Error("Get classes error", slog.String("err", err.Error()))
 		return nil, err
 	}
 	var reply class.ClassReply
@@ -43,7 +43,7 @@ func (s *service) Classes(_ context.Context, request *class.ClassRequest) (*clas
 func (s *service) Elements(_ context.Context, request *class.ClassElementRequest) (*class.ClassElementReply, error) {
 	c, err := s.db.Class(request.Name)
 	if err != nil {
-		slog.Error("Get class error ", slog.String("error", err.Error()))
+		slog.Error("Get class error ", slog.String("err", err.Error()))
 		return nil, err
 	}
 	var status *string = nil

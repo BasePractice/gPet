@@ -24,11 +24,11 @@ func main() {
 	flag.Parse()
 	err := godotenv.Load(".env", ".env.local")
 	if err != nil {
-		slog.Warn("Warning loading .env file", slog.String("error", err.Error()))
+		slog.Warn("Warning loading .env file", slog.String("err", err.Error()))
 	}
 	listen, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
-		slog.Error("Failed to listen", slog.String("error", err.Error()))
+		slog.Error("Failed to listen", slog.String("err", err.Error()))
 		os.Exit(1)
 	}
 	grpcServer := grpc.NewServer()
@@ -37,8 +37,8 @@ func main() {
 	_ = db.CreateClass("main", "Main")
 	server := &service{db: db, cache: cache}
 	class.RegisterServiceServer(grpcServer, server)
-	slog.Debug("Server listening at ", slog.String("address", listen.Addr().String()))
+	slog.Info("Starting server", slog.String("addr", listen.Addr().String()))
 	if err = grpcServer.Serve(listen); err != nil {
-		slog.Error("Failed to serve ", slog.String("error", err.Error()))
+		slog.Error("Failed to serve ", slog.String("err", err.Error()))
 	}
 }

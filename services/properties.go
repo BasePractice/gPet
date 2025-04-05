@@ -9,6 +9,7 @@ var (
 		"redis://localhost:6379/10?protocol=3")
 	LogLevel = resolveEnvironment("LOG_LEVEL", "DEBUG")
 	LogFile  = resolveEnvironment("LOG_FILE", "")
+	LogColor = resolveEnvironment("LOG_COLOR", "true")
 )
 
 func resolveEnvironment(key, defaultValue string) string {
