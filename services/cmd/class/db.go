@@ -5,11 +5,11 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"log"
 	"log/slog"
 	"strconv"
 	"time"
+
+	"github.com/google/uuid"
 
 	"pet/services"
 
