@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"embed"
-	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -13,9 +12,6 @@ import (
 
 	"pet/services"
 
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
-	"github.com/golang-migrate/migrate/v4/source/iofs"
 	_ "github.com/lib/pq"
 )
 
@@ -213,34 +209,12 @@ func (d *ds) Classes(nameFilter *string, status *string, version *uint32) ([]Cla
 	return result, nil
 }
 
-func migrationScheme(db *sql.DB) {
-	d, err := iofs.New(migrations, "migrations")
-	if err != nil {
-		slog.Error("Can't open migration resource", slog.String("err", err.Error()))
-	}
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
-	if err != nil {
-		slog.Error("Can't create postgres instance", slog.String("err", err.Error()))
-		return
-	}
-	instance, err := migrate.NewWithInstance("iofs", d, "pet", driver)
-	if err != nil {
-		slog.Error("Can't create migration", slog.String("err", err.Error()))
-		return
-	}
-	err = instance.Up()
-	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		slog.Error("Can't up migration", slog.String("err", err.Error()))
-		return
-	}
-}
-
 func NewDatabaseClass() DatabaseClass {
 	db, err := sql.Open("postgres", services.PostgresUrl)
 	if err != nil {
 		slog.Error("Can't open postgres connection", slog.String("err", err.Error()))
 		return nil
 	}
-	migrationScheme(db)
+	services.MigrationScheme(db, migrations)
 	return &ds{db}
 }
