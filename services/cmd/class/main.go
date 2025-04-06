@@ -27,8 +27,7 @@ func main() {
 				slog.String("err", fmt.Sprintf("%v", err)))
 		}
 	}()
-	ctx := context.Background()
-	go services.Handle(ctx, func(context.Context) {
+	ctx := services.ExitHandle(func(context.Context) {
 		slog.Info("Service exit")
 		os.Exit(0)
 	})

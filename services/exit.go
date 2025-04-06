@@ -8,9 +8,13 @@ import (
 
 type ExitHandler func(context.Context)
 
-func Handle(parent context.Context, handler ExitHandler) {
-	ctx, cancel := signal.NotifyContext(parent, syscall.SIGINT, syscall.SIGTERM)
-	defer cancel()
-	<-ctx.Done()
-	handler(ctx)
+func ExitHandle(handler ExitHandler) context.Context {
+	parent := context.Background()
+	go func() {
+		ctx, cancel := signal.NotifyContext(parent, syscall.SIGINT, syscall.SIGTERM)
+		defer cancel()
+		<-ctx.Done()
+		handler(ctx)
+	}()
+	return parent
 }
