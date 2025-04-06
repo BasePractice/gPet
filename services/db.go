@@ -10,7 +10,7 @@ import (
 	"log/slog"
 )
 
-func MigrationScheme(db *sql.DB, migrations embed.FS) {
+func migrationScheme(db *sql.DB, migrations embed.FS) {
 	d, err := iofs.New(migrations, "migrations")
 	if err != nil {
 		slog.Error("Can't open migration resource", slog.String("err", err.Error()))
@@ -30,4 +30,14 @@ func MigrationScheme(db *sql.DB, migrations embed.FS) {
 		slog.Error("Can't up migration", slog.String("err", err.Error()))
 		return
 	}
+}
+
+func NewDatabase(migrations embed.FS) (*sql.DB, error) {
+	db, err := sql.Open("postgres", PostgresUrl)
+	if err != nil {
+		slog.Error("Can't open postgres connection", slog.String("err", err.Error()))
+		return nil, err
+	}
+	migrationScheme(db, migrations)
+	return db, nil
 }

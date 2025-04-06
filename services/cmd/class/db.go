@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
-	"log/slog"
 	"strconv"
 	"time"
 
@@ -210,11 +209,9 @@ func (d *ds) Classes(nameFilter *string, status *string, version *uint32) ([]Cla
 }
 
 func NewDatabaseClass() DatabaseClass {
-	db, err := sql.Open("postgres", services.PostgresUrl)
+	db, err := services.NewDatabase(migrations)
 	if err != nil {
-		slog.Error("Can't open postgres connection", slog.String("err", err.Error()))
 		return nil
 	}
-	services.MigrationScheme(db, migrations)
 	return &ds{db}
 }
