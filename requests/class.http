@@ -1,12 +1,10 @@
 ### Classes
 GRPC {{class-url}}/class.Service/Classes
-Content-Type: application/json
 
 {}
 
 ### Elements
 GRPC {{class-url}}/class.Service/Elements
-Content-Type: application/json
 
 {
   "name": "sex"

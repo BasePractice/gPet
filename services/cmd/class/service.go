@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"log/slog"
-
 	"pet/middleware/class"
 	"pet/services"
 )
@@ -15,7 +14,8 @@ type service struct {
 	cache services.Cache
 }
 
-func (s *service) Classes(_ context.Context, request *class.ClassRequest) (*class.ClassReply, error) {
+func (s *service) Classes(ctx context.Context, request *class.ClassRequest) (*class.ClassReply, error) {
+	services.PrintMetadata(ctx)
 	var status *string = nil
 	if request.Status != nil {
 		s2 := request.GetStatus().ToSql()
@@ -40,7 +40,8 @@ func (s *service) Classes(_ context.Context, request *class.ClassRequest) (*clas
 	return &reply, nil
 }
 
-func (s *service) Elements(_ context.Context, request *class.ClassElementRequest) (*class.ClassElementReply, error) {
+func (s *service) Elements(ctx context.Context, request *class.ClassElementRequest) (*class.ClassElementReply, error) {
+	services.PrintMetadata(ctx)
 	c, err := s.db.Class(request.Name)
 	if err != nil {
 		slog.Error("Get class error ", slog.String("err", err.Error()))
