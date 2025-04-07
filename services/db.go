@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"embed"
 	"errors"
+	"log/slog"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
-	"log/slog"
 )
 
 func migrationScheme(db *sql.DB, migrations embed.FS) {

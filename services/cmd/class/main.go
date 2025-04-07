@@ -7,9 +7,10 @@ import (
 	"log/slog"
 	"net"
 	"os"
+	"runtime/debug"
+
 	"pet/middleware/class"
 	"pet/services"
-	"runtime/debug"
 
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"

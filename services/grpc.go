@@ -2,9 +2,10 @@ package services
 
 import (
 	"context"
-	"google.golang.org/grpc/metadata"
 	"log/slog"
 	"strings"
+
+	"google.golang.org/grpc/metadata"
 )
 
 func PrintMetadata(context context.Context) {
