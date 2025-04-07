@@ -23,7 +23,7 @@ CREATE TABLE %s
     key        VARCHAR   NOT NULL,
     value      VARCHAR   NOT NULL,
     version    INTEGER   NOT NULL                                                    DEFAULT 1,
-    status     VARCHAR   NOT NULL CHECK ( status IN ('DRAFT', 'PUBLISHED', 'SKIP') ) DEFAULT 'DRAFT',
+    status     VARCHAR   NOT NULL CHECK ( status IN ('ITEM_DRAFT', 'ITEM_PUBLISHED', 'ITEM_SKIP') ) DEFAULT 'ITEM_DRAFT',
     before_at  TIMESTAMP                                                             DEFAULT NULL,
     after_at   TIMESTAMP                                                             DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL                                                    DEFAULT CURRENT_TIMESTAMP,

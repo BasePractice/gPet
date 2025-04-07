@@ -1,38 +1,12 @@
 package class
 
-func (s ClassElementStatus) ToSql() string {
-	switch s {
-	case ClassElementStatus_ITEM_DRAFT:
-		return "DRAFT"
-	case ClassElementStatus_ITEM_PUBLISHED:
-		return "PUBLISHED"
-	case ClassElementStatus_ITEM_SKIP:
-		return "SKIP"
-	default:
-		return "NONE"
-	}
-}
-
-func (s ClassStatus) ToSql() string {
-	switch s {
-	case ClassStatus_CLASS_DRAFT:
-		return "DRAFT"
-	case ClassStatus_CLASS_PUBLISHED:
-		return "PUBLISHED"
-	case ClassStatus_CLASS_ARCHIVED:
-		return "ARCHIVED"
-	default:
-		return "NONE"
-	}
-}
-
 func ElementStatusFromSql(key string) ClassElementStatus {
 	switch key {
-	case "DRAFT":
+	case "ITEM_DRAFT":
 		return ClassElementStatus_ITEM_DRAFT
-	case "PUBLISHED":
+	case "ITEM_PUBLISHED":
 		return ClassElementStatus_ITEM_PUBLISHED
-	case "SKIP":
+	case "ITEM_SKIP":
 		return ClassElementStatus_ITEM_SKIP
 	default:
 		return ClassElementStatus_ITEM_NONE
@@ -42,11 +16,11 @@ func ElementStatusFromSql(key string) ClassElementStatus {
 //goland:noinspection GoNameStartsWithPackageName
 func ClassStatusFromSql(key string) ClassStatus {
 	switch key {
-	case "DRAFT":
+	case "CLASS_DRAFT":
 		return ClassStatus_CLASS_DRAFT
-	case "PUBLISHED":
+	case "CLASS_PUBLISHED":
 		return ClassStatus_CLASS_PUBLISHED
-	case "SKIP":
+	case "CLASS_ARCHIVED":
 		return ClassStatus_CLASS_ARCHIVED
 	default:
 		return ClassStatus_CLASS_NONE

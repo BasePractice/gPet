@@ -1,29 +1,29 @@
 CREATE TABLE classes
 (
-    id         UUID      NOT NULL                                                        DEFAULT gen_random_uuid(),
+    id         UUID      NOT NULL                                                                          DEFAULT gen_random_uuid(),
     name       VARCHAR   NOT NULL,
-    table_name VARCHAR   NOT NULL,                                                                  -- Values table name
-    current    INTEGER                                                                   DEFAULT 1, -- Current version
-    status     VARCHAR   NOT NULL CHECK ( status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED') ) DEFAULT 'DRAFT',
-    title      VARCHAR                                                                   DEFAULT NULL,
-    updated_at TIMESTAMP NOT NULL                                                        DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL                                                        DEFAULT CURRENT_TIMESTAMP,
+    table_name VARCHAR   NOT NULL,                                                                                    -- Values table name
+    current    INTEGER                                                                                     DEFAULT 1, -- Current version
+    status     VARCHAR   NOT NULL CHECK ( status IN ('CLASS_DRAFT', 'CLASS_PUBLISHED', 'CLASS_ARCHIVED') ) DEFAULT 'CLASS_DRAFT',
+    title      VARCHAR                                                                                     DEFAULT NULL,
+    updated_at TIMESTAMP NOT NULL                                                                          DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL                                                                          DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (name)
 );
 INSERT INTO classes(name, table_name, title)
 VALUES ('sex', 'class_sex', 'Пол человека');
 CREATE TABLE class_sex
 (
-    id         UUID      NOT NULL                                                    DEFAULT gen_random_uuid(),
+    id         UUID      NOT NULL                                                                   DEFAULT gen_random_uuid(),
     next       SERIAL    NOT NULL PRIMARY KEY,
     key        VARCHAR   NOT NULL,
     value      VARCHAR   NOT NULL,
-    version    INTEGER   NOT NULL                                                    DEFAULT 1,
-    status     VARCHAR   NOT NULL CHECK ( status IN ('DRAFT', 'PUBLISHED', 'SKIP') ) DEFAULT 'DRAFT',
-    before_at  TIMESTAMP                                                             DEFAULT NULL,
-    after_at   TIMESTAMP                                                             DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL                                                    DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP NOT NULL                                                    DEFAULT CURRENT_TIMESTAMP,
+    version    INTEGER   NOT NULL                                                                   DEFAULT 1,
+    status     VARCHAR   NOT NULL CHECK ( status IN ('ITEM_DRAFT', 'ITEM_PUBLISHED', 'ITEM_SKIP') ) DEFAULT 'ITEM_DRAFT',
+    before_at  TIMESTAMP                                                                            DEFAULT NULL,
+    after_at   TIMESTAMP                                                                            DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL                                                                   DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL                                                                   DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (key, value, version)
 );
 CREATE TABLE class_values_changes

@@ -19,7 +19,7 @@ func (s *service) Classes(ctx context.Context, request *class.ClassRequest) (*cl
 	services.PrintMetadata(ctx)
 	var status *string = nil
 	if request.Status != nil {
-		s2 := request.GetStatus().ToSql()
+		s2 := request.GetStatus().String()
 		status = &s2
 	}
 	classes, err := s.db.Classes(request.NameFilter, status, request.Version)
@@ -50,7 +50,7 @@ func (s *service) Elements(ctx context.Context, request *class.ClassElementReque
 	}
 	var status *string = nil
 	if request.Status != nil {
-		s2 := request.GetStatus().ToSql()
+		s2 := request.GetStatus().String()
 		status = &s2
 	}
 	var offset = 0
