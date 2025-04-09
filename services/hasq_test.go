@@ -9,14 +9,18 @@ func TestHashQ_CreateKey(t *testing.T) {
 }
 
 func TestHashQ_CreateChain(t *testing.T) {
-	tok := CreateToken([]byte("DATA"))
-	chain := CreateChain(tok, "password")
+	chain := CreateChain([]byte("DATA"), "password")
+	appendOwner(chain, "password1")
+	appendOwner(chain, "password2")
+	appendOwner(chain, "password3")
+	appendOwner(chain, "password4")
+	appendOwner(chain, "password5")
+	appendOwner(chain, "password6")
 	t.Log(chain)
-	key := chain.Key("password2")
-	t.Log(key)
-	chain.Owned(key)
-	key = chain.Key("password3")
-	t.Log(key)
-	chain.Owned(key)
-	t.Log(chain)
+	t.Log(chain.Validate())
+}
+
+func appendOwner(ch Chain, passphrase string) {
+	key := ch.Key(passphrase)
+	ch.Owned(key)
 }

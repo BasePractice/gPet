@@ -1,0 +1,30 @@
+//edition = "2023";
+syntax = "proto3";
+
+option go_package = "middleware/hasq";
+
+package hasq;
+
+message TokenCreate {
+  string title = 1;
+  bytes  data = 2;
+}
+
+message TokenReply {
+  string id = 1;
+  string title = 2;
+  string hash = 3;
+  optional bytes data = 4;
+}
+
+message TokenSearch {
+  oneof search {
+    string id = 1;
+    string hash = 2;
+  }
+}
+
+service Service {
+  rpc CreateToken(TokenCreate) returns (TokenReply);
+  rpc SearchToken(TokenSearch) returns (TokenReply);
+}
