@@ -53,3 +53,18 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres-db:5432/pet?sslmode=disable&search_path=class
       REDIS_URL: redis://redis:6379/10?protocol=3&max_retries=5
+  hasq:
+    image: pet/hasq:latest
+    platform: linux/amd64
+    build:
+      context: ./
+      dockerfile: ./services/cmd/hasq/Dockerfile
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "52051:52051"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres-db:5432/pet?sslmode=disable&search_path=hasq
