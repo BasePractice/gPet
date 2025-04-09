@@ -15,36 +15,14 @@ type Chain interface {
 
 type Token interface {
 	String() string
-	Equal(t Token) bool
 }
 
 type Key interface {
 	String() string
 }
 
-type Generator interface {
-	String() string
-	Equal(g Generator) bool
-}
-
-type Owner interface {
-	String() string
-	Equal(o Owner) bool
-}
-
 type token struct {
 	data string
-}
-
-func (t token) Equal(other Token) bool {
-	switch other.(type) {
-	case token:
-		return t.data == other.(token).data
-	case *token:
-		return t.data == other.(*token).data
-	default:
-		panic(fmt.Sprintf("invalid token type: %T", other))
-	}
 }
 
 type key struct {
@@ -55,30 +33,8 @@ type generator struct {
 	data string
 }
 
-func (g generator) Equal(other Generator) bool {
-	switch other.(type) {
-	case generator:
-		return g.data == other.(generator).data
-	case *generator:
-		return g.data == other.(*generator).data
-	default:
-		panic(fmt.Sprintf("invalid generator type: %T", other))
-	}
-}
-
 type owner struct {
 	data string
-}
-
-func (o owner) Equal(other Owner) bool {
-	switch other.(type) {
-	case owner:
-		return o.data == other.(owner).data
-	case *owner:
-		return o.data == other.(*owner).data
-	default:
-		panic(fmt.Sprintf("invalid owner type: %T", other))
-	}
 }
 
 type chain struct {
@@ -90,13 +46,13 @@ func (c *chain) Validate() bool {
 	for i := len(c.elements) - 1; i >= 1; i-- {
 		var curr = c.elements[i]
 		var prev = c.elements[i-1]
-		var genn = createGenerator(i, c.token, curr.key)
-		if !genn.Equal(prev.gen) {
+		var gen = createGenerator(i, c.token, curr.key)
+		if gen.data != prev.gen.data {
 			return false
 		}
 		if i-2 >= 0 && curr.gen != nil {
-			var ownr = createOwner(curr.gen)
-			if !ownr.Equal(prev.owner) {
+			var own = createOwner(curr.gen)
+			if own.data != prev.owner.data {
 				return false
 			}
 		}
@@ -127,12 +83,8 @@ func (c *chain) Owned(key Key) int {
 
 type element struct {
 	key   Key
-	gen   Generator
-	owner Owner
-}
-
-func (e element) String() string {
-	return e.key.String() + ":" + e.gen.String() + ":" + e.owner.String()
+	gen   *generator
+	owner *owner
 }
 
 func (t token) String() string {
@@ -141,14 +93,6 @@ func (t token) String() string {
 
 func (k key) String() string {
 	return k.data
-}
-
-func (g generator) String() string {
-	return g.data
-}
-
-func (o owner) String() string {
-	return o.data
 }
 
 func CreateToken(data []byte) Token {
@@ -160,31 +104,31 @@ func createKey(token Token, passphrase string) Key {
 	return &key{data: hash(0, token.String(), passphrase)}
 }
 
-func createGenerator(index int, token Token, key Key) Generator {
+func createGenerator(index int, token Token, key Key) *generator {
 	return &generator{data: hash(index, token.String(), key.String())}
 }
 
-func createOwner(generator Generator) Owner {
-	return &owner{data: hash(generator.String())}
+func createOwner(generator *generator) *owner {
+	return &owner{data: hash(generator.data)}
 }
 
-func createKeyOwner(key Key) Owner {
+func createKeyOwner(key Key) *owner {
 	return &owner{data: key.String()}
 }
 
-func createKeyGenerator(key Key) Generator {
+func createKeyGenerator(key Key) *generator {
 	return &generator{data: key.String()}
 }
 
 func CreateChain(tokenData []byte, passphrase string) Chain {
-	token := CreateToken(tokenData)
-	key := createKey(token, passphrase)
+	tok := CreateToken(tokenData)
+	k := createKey(tok, passphrase)
 	elements := make([]*element, 0)
 	elements = append(elements, &element{
-		key: key, owner: createKeyOwner(key),
-		gen: createKeyGenerator(key),
+		key: k, owner: createKeyOwner(k),
+		gen: createKeyGenerator(k),
 	})
-	return &chain{token: token, elements: elements}
+	return &chain{token: tok, elements: elements}
 }
 
 func digest(params ...any) []byte {
