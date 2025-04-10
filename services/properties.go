@@ -7,7 +7,7 @@ var (
 		"postgres://postgres:postgres@local:25432/pet?sslmode=disable&search_path=public")
 	RedisUrl = resolveEnvironment("REDIS_URL",
 		"redis://localhost:6379/10?protocol=3")
-	LogLevel = resolveEnvironment("LOG_LEVEL", "DEBUG")
+	LogLevel = resolveEnvironment("LOG_LEVEL", "INFO")
 	LogFile  = resolveEnvironment("LOG_FILE", "")
 	LogColor = resolveEnvironment("LOG_COLOR", "true")
 )

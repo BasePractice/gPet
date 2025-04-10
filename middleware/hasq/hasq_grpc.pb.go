@@ -23,6 +23,9 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	Service_CreateToken_FullMethodName = "/hasq.Service/CreateToken"
 	Service_SearchToken_FullMethodName = "/hasq.Service/SearchToken"
+	Service_CreateKey_FullMethodName   = "/hasq.Service/CreateKey"
+	Service_Owned_FullMethodName       = "/hasq.Service/Owned"
+	Service_Validate_FullMethodName    = "/hasq.Service/Validate"
 )
 
 // ServiceClient is the client API for Service service.
@@ -31,6 +34,9 @@ const (
 type ServiceClient interface {
 	CreateToken(ctx context.Context, in *TokenCreate, opts ...grpc.CallOption) (*TokenReply, error)
 	SearchToken(ctx context.Context, in *TokenSearch, opts ...grpc.CallOption) (*TokenReply, error)
+	CreateKey(ctx context.Context, in *KeyCreate, opts ...grpc.CallOption) (*KeyCreateReply, error)
+	Owned(ctx context.Context, in *OwnerCreate, opts ...grpc.CallOption) (*OwnerCreateReply, error)
+	Validate(ctx context.Context, in *ChainValidate, opts ...grpc.CallOption) (*ChainValidateReply, error)
 }
 
 type serviceClient struct {
@@ -61,12 +67,45 @@ func (c *serviceClient) SearchToken(ctx context.Context, in *TokenSearch, opts .
 	return out, nil
 }
 
+func (c *serviceClient) CreateKey(ctx context.Context, in *KeyCreate, opts ...grpc.CallOption) (*KeyCreateReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(KeyCreateReply)
+	err := c.cc.Invoke(ctx, Service_CreateKey_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serviceClient) Owned(ctx context.Context, in *OwnerCreate, opts ...grpc.CallOption) (*OwnerCreateReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(OwnerCreateReply)
+	err := c.cc.Invoke(ctx, Service_Owned_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *serviceClient) Validate(ctx context.Context, in *ChainValidate, opts ...grpc.CallOption) (*ChainValidateReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChainValidateReply)
+	err := c.cc.Invoke(ctx, Service_Validate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServiceServer is the server API for Service service.
 // All implementations must embed UnimplementedServiceServer
 // for forward compatibility.
 type ServiceServer interface {
 	CreateToken(context.Context, *TokenCreate) (*TokenReply, error)
 	SearchToken(context.Context, *TokenSearch) (*TokenReply, error)
+	CreateKey(context.Context, *KeyCreate) (*KeyCreateReply, error)
+	Owned(context.Context, *OwnerCreate) (*OwnerCreateReply, error)
+	Validate(context.Context, *ChainValidate) (*ChainValidateReply, error)
 	mustEmbedUnimplementedServiceServer()
 }
 
@@ -82,6 +121,15 @@ func (UnimplementedServiceServer) CreateToken(context.Context, *TokenCreate) (*T
 }
 func (UnimplementedServiceServer) SearchToken(context.Context, *TokenSearch) (*TokenReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchToken not implemented")
+}
+func (UnimplementedServiceServer) CreateKey(context.Context, *KeyCreate) (*KeyCreateReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateKey not implemented")
+}
+func (UnimplementedServiceServer) Owned(context.Context, *OwnerCreate) (*OwnerCreateReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Owned not implemented")
+}
+func (UnimplementedServiceServer) Validate(context.Context, *ChainValidate) (*ChainValidateReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Validate not implemented")
 }
 func (UnimplementedServiceServer) mustEmbedUnimplementedServiceServer() {}
 func (UnimplementedServiceServer) testEmbeddedByValue()                 {}
@@ -140,6 +188,60 @@ func _Service_SearchToken_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Service_CreateKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(KeyCreate)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceServer).CreateKey(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Service_CreateKey_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceServer).CreateKey(ctx, req.(*KeyCreate))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Service_Owned_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OwnerCreate)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceServer).Owned(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Service_Owned_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceServer).Owned(ctx, req.(*OwnerCreate))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Service_Validate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChainValidate)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceServer).Validate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Service_Validate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceServer).Validate(ctx, req.(*ChainValidate))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Service_ServiceDesc is the grpc.ServiceDesc for Service service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -154,6 +256,18 @@ var Service_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SearchToken",
 			Handler:    _Service_SearchToken_Handler,
+		},
+		{
+			MethodName: "CreateKey",
+			Handler:    _Service_CreateKey_Handler,
+		},
+		{
+			MethodName: "Owned",
+			Handler:    _Service_Owned_Handler,
+		},
+		{
+			MethodName: "Validate",
+			Handler:    _Service_Validate_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

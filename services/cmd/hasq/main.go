@@ -45,12 +45,6 @@ func main() {
 	}
 	grpcServer := grpc.NewServer()
 	db := NewDatabaseToken()
-	err, t := db.CreateToken("main", []byte("Main"))
-	if err != nil {
-		slog.Error("Failed to create token", slog.String("err", err.Error()))
-	} else {
-		slog.Info("Create token successfully", slog.String("token", t.String()))
-	}
 	server := &service{db: db}
 	hasq.RegisterServiceServer(grpcServer, server)
 	slog.Info("Starting server", slog.String("addr", listen.Addr().String()))

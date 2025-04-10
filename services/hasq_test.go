@@ -21,6 +21,6 @@ func TestHashQ_CreateChain(t *testing.T) {
 }
 
 func appendOwner(ch Chain, passphrase string) {
-	k := ch.Key(passphrase)
+	_, k := ch.Key(passphrase)
 	ch.Owned(k)
 }

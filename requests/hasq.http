@@ -1,8 +1,174 @@
+### CreateToken
+GRPC {{hasq-url}}/hasq.Service/CreateToken
+
+{
+  "title": "{{$random.name.title}}",
+  "data": "{{$random.uuid}}"
+}
+
+> {%
+    client.log("Token", response.body);
+    client.global.set("token_id", response.body.tokenId);
+%}
+
 ### Search
 GRPC {{hasq-url}}/hasq.Service/SearchToken
 
 {
-  "id": "bcfd3815-feb1-4d18-a55e-6107bb472082"
+  "token_id": "{{token_id}}"
 }
 
+> {%
+    client.test("Successful response", () => {
+        client.assert(response.status != 200, "Response not successful")
+    });
+%}
+
+### CreateKey
+GRPC {{hasq-url}}/hasq.Service/CreateKey
+
+{
+  "user_id": "{{users['simple']}}",
+  "token_id": "{{token_id}}",
+  "passphrase": "{{$random.crypto.md5}}"
+}
+
+> {%
+    client.test("Successful response", () => {
+        client.assert(response.status != 200, "Response not successful")
+    });
+%}
+
+### Owned
+GRPC {{hasq-url}}/hasq.Service/Owned
+
+{
+  "user_id": "{{users['simple']}}",
+  "token_id": "{{token_id}}"
+}
+
+> {%
+    client.test("Successful", () => {
+        client.assert(response.status != 200, "Response not successful")
+        client.assert(response.body.successful == true, "Not owned")
+    });
+%}
+
+### Validate
+GRPC {{hasq-url}}/hasq.Service/Validate
+
+{
+  "token_id": "{{token_id}}"
+}
+
+> {%
+    client.test("Successful", () => {
+        client.assert(response.status != 200, "Response not successful")
+        client.assert(response.body.successful == true, "Not valid")
+    });
+%}
+
+### CreateKey
+GRPC {{hasq-url}}/hasq.Service/CreateKey
+
+{
+  "user_id": "{{users['simple']}}",
+  "token_id": "{{token_id}}",
+  "passphrase": "{{$random.crypto.md5}}"
+}
+
+> {%
+    client.test("Successful response", () => {
+        client.assert(response.status != 200, "Response not successful")
+    });
+%}
+
+### Next owned with same keys
+GRPC {{hasq-url}}/hasq.Service/Owned
+
+{
+  "user_id": "{{users['simple']}}",
+  "token_id": "{{token_id}}"
+}
+
+> {%
+    client.test("Successful", () => {
+        client.assert(response.status != 200, "Response not successful")
+        client.assert(response.body.successful == true, "Not owned")
+    });
+%}
+
+### CreateKey
+GRPC {{hasq-url}}/hasq.Service/CreateKey
+
+{
+  "user_id": "{{users['simple']}}",
+  "token_id": "{{token_id}}",
+  "passphrase": "{{$random.crypto.md5}}"
+}
+
+> {%
+    client.test("Successful response", () => {
+        client.assert(response.status != 200, "Response not successful")
+    });
+%}
+
+### Next owned with same keys
+GRPC {{hasq-url}}/hasq.Service/Owned
+
+{
+  "user_id": "{{users['simple']}}",
+  "token_id": "{{token_id}}"
+}
+
+> {%
+    client.test("Successful", () => {
+        client.assert(response.status != 200, "Response not successful")
+        client.assert(response.body.successful == true, "Not owned")
+    });
+%}
+
+### CreateKey
+GRPC {{hasq-url}}/hasq.Service/CreateKey
+
+{
+  "user_id": "{{users['last']}}",
+  "token_id": "{{token_id}}",
+  "passphrase": "{{$random.crypto.md5}}"
+}
+
+> {%
+    client.test("Successful response", () => {
+        client.assert(response.status != 200, "Response not successful")
+    });
+%}
+
+### Next owned with same keys
+GRPC {{hasq-url}}/hasq.Service/Owned
+
+{
+  "user_id": "{{users['last']}}",
+  "token_id": "{{token_id}}"
+}
+
+> {%
+    client.test("Successful", () => {
+        client.assert(response.status != 200, "Response not successful")
+        client.assert(response.body.successful == true, "Not owned")
+    });
+%}
+
+### Validate
+GRPC {{hasq-url}}/hasq.Service/Validate
+
+{
+  "token_id": "{{token_id}}"
+}
+
+> {%
+    client.test("Successful", () => {
+        client.assert(response.status != 200, "Response not successful")
+        client.assert(response.body.successful == true, "Not valid")
+    });
+%}
 
