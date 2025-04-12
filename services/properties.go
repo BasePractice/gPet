@@ -10,6 +10,8 @@ var (
 	LogLevel = resolveEnvironment("LOG_LEVEL", "INFO")
 	LogFile  = resolveEnvironment("LOG_FILE", "")
 	LogColor = resolveEnvironment("LOG_COLOR", "true")
+
+	MetricsPort = resolveEnvironment("METRICS_PORT", "8081")
 )
 
 func resolveEnvironment(key, defaultValue string) string {

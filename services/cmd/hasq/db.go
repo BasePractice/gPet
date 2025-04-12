@@ -179,13 +179,13 @@ func (d *ds) LoadChain(token *Token) (services.Chain, error) {
 	if err != nil {
 		return nil, err
 	}
-	query = fmt.Sprintf("SELECT id, key, generator, owner FROM %s ORDER BY id DESC LIMIT 4", tb)
-	rows := d.db.QueryRow(query)
-	if rows.Err() != nil {
-		return nil, rows.Err()
+	query = fmt.Sprintf("SELECT id, key, generator, owner FROM %s ORDER BY id LIMIT 4", tb)
+	rows, err := d.db.Query(query)
+	if err != nil {
+		return nil, err
 	}
 	var ch = services.CreateEmptyChain(token.Hash, c)
-	for {
+	for rows.Next() {
 		var id uint64
 		var key string
 		var generator *string

@@ -13,5 +13,6 @@ FROM scratch
 COPY --from=builder /hasq /hasq
 
 EXPOSE 52051
+EXPOSE 8081
 
 CMD ["/hasq"]

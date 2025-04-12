@@ -1,11 +1,15 @@
 package services
 
 import (
+	"flag"
 	"log"
 	"log/slog"
+	"net/http"
 	"os"
+	"strconv"
 	"time"
 
+	"github.com/arl/statsviz"
 	"github.com/lmittmann/tint"
 	"github.com/mattn/go-colorable"
 )
@@ -34,4 +38,24 @@ func DefineLogging() *slog.Logger {
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
 	return logger
+}
+
+func DefineMetrics() {
+	i, err := strconv.Atoi(MetricsPort)
+	if err != nil {
+		slog.Error("Error parsing metrics port",
+			slog.String("port", MetricsPort), slog.String("err", err.Error()))
+		i = 8081
+	}
+	mPort := flag.Int("mport", i, "Metrics port")
+	mux := http.NewServeMux()
+	err = statsviz.Register(mux)
+	if err != nil {
+		slog.Error("Error registering metrics", slog.String("err", err.Error()))
+	} else {
+		go func() {
+			slog.Info("Metrics listening on port", slog.String("port", strconv.Itoa(*mPort)))
+			_ = http.ListenAndServe(":"+strconv.Itoa(*mPort), mux)
+		}()
+	}
 }

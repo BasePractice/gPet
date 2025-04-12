@@ -32,8 +32,9 @@ func main() {
 		slog.Info("Service exit")
 		os.Exit(0)
 	})
-	services.DefineLogging()
 	flag.Parse()
+	services.DefineLogging()
+	services.DefineMetrics()
 	err := godotenv.Load(".env", ".env.local")
 	if err != nil {
 		slog.Warn("Warning loading .env file", slog.String("err", err.Error()))

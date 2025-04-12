@@ -13,5 +13,6 @@ FROM scratch
 COPY --from=builder /class /class
 
 EXPOSE 51051
+EXPOSE 8081
 
 CMD ["/class"]
