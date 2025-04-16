@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"sync"
 	"time"
 )
@@ -15,31 +14,32 @@ type Philosopher struct {
 	right *sync.Mutex
 }
 
+var forks = make([]sync.Mutex, 5)
 var philosophers = []*Philosopher{
 	{
 		name:  "Plato",
-		left:  &sync.Mutex{},
-		right: &sync.Mutex{},
+		left:  &forks[0],
+		right: &forks[4],
 	},
 	{
 		name:  "Socrates",
-		left:  &sync.Mutex{},
-		right: &sync.Mutex{},
+		left:  &forks[1],
+		right: &forks[0],
 	},
 	{
 		name:  "Aristotle",
-		left:  &sync.Mutex{},
-		right: &sync.Mutex{},
+		left:  &forks[2],
+		right: &forks[1],
 	},
 	{
 		name:  "Democritus",
-		left:  &sync.Mutex{},
-		right: &sync.Mutex{},
+		left:  &forks[3],
+		right: &forks[2],
 	},
 	{
 		name:  "Hippocrates",
-		left:  &sync.Mutex{},
-		right: &sync.Mutex{},
+		left:  &forks[4],
+		right: &forks[3],
 	},
 }
 
@@ -47,12 +47,19 @@ func (p Philosopher) Eat(wg *sync.WaitGroup, eating int) {
 	defer wg.Done()
 
 	for i := 0; i < eating; i++ {
-		fmt.Printf("Philosopher %s thinking\n", p.name)
-		time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
-		p.left.Lock()
-		p.right.Lock()
-		fmt.Printf("Philosopher %s eating\n", p.name)
-		time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
+		fmt.Printf("[%02d] Philosopher %s thinking\n", i, p.name)
+	lbl:
+		for {
+			p.left.Lock()
+			time.Sleep(time.Second)
+			for !p.right.TryLock() {
+				p.left.Unlock()
+				time.Sleep(10 * time.Millisecond)
+				continue lbl
+			}
+			break
+		}
+		fmt.Printf("[%02d] Philosopher %s eating\n", i, p.name)
 		p.right.Unlock()
 		p.left.Unlock()
 	}
