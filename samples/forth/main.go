@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -345,6 +346,307 @@ func (vm *ForthVM) LoadDictionary(filename string) error {
 
 	// Update memory pointer
 	vm.memoryPointer = sd.MemPtr
+
+	return nil
+}
+
+// SaveDictionaryBinary saves the dictionary and memory to a binary file
+func (vm *ForthVM) SaveDictionaryBinary(filename string) error {
+	// Create the file
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Binary format:
+	// 1. Magic number (4 bytes): "FRTH"
+	// 2. Version (2 bytes): 0x0001
+	// 3. Number of words (4 bytes)
+	// 4. Memory pointer (4 bytes)
+	// 5. For each word:
+	//    a. Name length (2 bytes)
+	//    b. Name (variable length)
+	//    c. Flags (1 byte): bit 0 = immediate, bit 1 = threaded
+	//    d. Code pointer (4 bytes, only for threaded words)
+	// 6. For each memory cell:
+	//    a. Type (1 byte): 0 = int, 1 = word reference, 2 = string, 3 = exit
+	//    b. Value (variable length depending on type)
+
+	// Write magic number and version
+	if _, err := file.Write([]byte("FRTH")); err != nil {
+		return err
+	}
+	if err := binary.Write(file, binary.LittleEndian, uint16(1)); err != nil {
+		return err
+	}
+
+	// Create a map of word pointers to their names for memory cell serialization
+	wordPtrToName := make(map[*Word]string)
+	for name, word := range vm.dictionary {
+		wordPtrToName[word] = name
+	}
+
+	// Collect threaded words
+	var threadedWords []*Word
+	for _, word := range vm.dictionary {
+		if word.IsThreaded {
+			threadedWords = append(threadedWords, word)
+		}
+	}
+
+	// Write number of words
+	if err := binary.Write(file, binary.LittleEndian, uint32(len(threadedWords))); err != nil {
+		return err
+	}
+
+	// Write memory pointer
+	if err := binary.Write(file, binary.LittleEndian, uint32(vm.memoryPointer)); err != nil {
+		return err
+	}
+
+	// Write words
+	for _, word := range threadedWords {
+		// Write name length
+		if err := binary.Write(file, binary.LittleEndian, uint16(len(word.Name))); err != nil {
+			return err
+		}
+		// Write name
+		if _, err := file.Write([]byte(word.Name)); err != nil {
+			return err
+		}
+		// Write flags
+		var flags byte
+		if word.Immediate {
+			flags |= 1
+		}
+		if word.IsThreaded {
+			flags |= 2
+		}
+		if err := binary.Write(file, binary.LittleEndian, flags); err != nil {
+			return err
+		}
+		// Write code pointer (only for threaded words)
+		if word.IsThreaded {
+			if err := binary.Write(file, binary.LittleEndian, uint32(word.CodePointer)); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Write memory cells
+	for i := 0; i < vm.memoryPointer; i++ {
+		cell := vm.memory[i]
+		switch v := cell.(type) {
+		case int:
+			// Write type (0 = int)
+			if err := binary.Write(file, binary.LittleEndian, byte(0)); err != nil {
+				return err
+			}
+			// Write value
+			if err := binary.Write(file, binary.LittleEndian, int32(v)); err != nil {
+				return err
+			}
+		case *Word:
+			// Write type (1 = word reference)
+			if err := binary.Write(file, binary.LittleEndian, byte(1)); err != nil {
+				return err
+			}
+			// Write word name length
+			name := wordPtrToName[v]
+			if err := binary.Write(file, binary.LittleEndian, uint16(len(name))); err != nil {
+				return err
+			}
+			// Write word name
+			if _, err := file.Write([]byte(name)); err != nil {
+				return err
+			}
+		case string:
+			if v == "EXIT" {
+				// Write type (3 = exit)
+				if err := binary.Write(file, binary.LittleEndian, byte(3)); err != nil {
+					return err
+				}
+			} else {
+				// Write type (2 = string)
+				if err := binary.Write(file, binary.LittleEndian, byte(2)); err != nil {
+					return err
+				}
+				// Write string length
+				if err := binary.Write(file, binary.LittleEndian, uint16(len(v))); err != nil {
+					return err
+				}
+				// Write string
+				if _, err := file.Write([]byte(v)); err != nil {
+					return err
+				}
+			}
+		default:
+			return fmt.Errorf("unsupported cell type at memory location %d", i)
+		}
+	}
+
+	return nil
+}
+
+// LoadDictionaryBinary loads the dictionary and memory from a binary file
+func (vm *ForthVM) LoadDictionaryBinary(filename string) error {
+	// Open the file
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Read magic number
+	magic := make([]byte, 4)
+	if _, err := file.Read(magic); err != nil {
+		return err
+	}
+	if string(magic) != "FRTH" {
+		return fmt.Errorf("invalid file format: not a Forth binary dictionary")
+	}
+
+	// Read version
+	var version uint16
+	if err := binary.Read(file, binary.LittleEndian, &version); err != nil {
+		return err
+	}
+	if version != 1 {
+		return fmt.Errorf("unsupported version: %d", version)
+	}
+
+	// Read number of words
+	var numWords uint32
+	if err := binary.Read(file, binary.LittleEndian, &numWords); err != nil {
+		return err
+	}
+
+	// Read memory pointer
+	var memPtr uint32
+	if err := binary.Read(file, binary.LittleEndian, &memPtr); err != nil {
+		return err
+	}
+
+	// Create a map of names to primitive words from the current dictionary
+	primitiveWords := make(map[string]*Word)
+	for name, word := range vm.dictionary {
+		if !word.IsThreaded {
+			primitiveWords[name] = word
+		}
+	}
+
+	// Clear the current dictionary (but keep primitive words)
+	newDict := make(map[string]*Word)
+	for name, word := range primitiveWords {
+		newDict[name] = word
+	}
+	vm.dictionary = newDict
+
+	// Reset memory
+	vm.memory = make([]Cell, len(vm.memory))
+	vm.memoryPointer = 0
+
+	// Read words
+	for i := uint32(0); i < numWords; i++ {
+		// Read name length
+		var nameLen uint16
+		if err := binary.Read(file, binary.LittleEndian, &nameLen); err != nil {
+			return err
+		}
+
+		// Read name
+		nameBytes := make([]byte, nameLen)
+		if _, err := file.Read(nameBytes); err != nil {
+			return err
+		}
+		name := string(nameBytes)
+
+		// Read flags
+		var flags byte
+		if err := binary.Read(file, binary.LittleEndian, &flags); err != nil {
+			return err
+		}
+		immediate := (flags & 1) != 0
+		isThreaded := (flags & 2) != 0
+
+		// Read code pointer (only for threaded words)
+		var codePointer uint32
+		if isThreaded {
+			if err := binary.Read(file, binary.LittleEndian, &codePointer); err != nil {
+				return err
+			}
+		}
+
+		// Add the word to the dictionary
+		if isThreaded {
+			vm.AddThreadedWord(name, int(codePointer))
+			if immediate {
+				vm.dictionary[name].Immediate = true
+			}
+		}
+	}
+
+	// Create a map of word names to word pointers
+	wordMap := make(map[string]*Word)
+	for name, word := range vm.dictionary {
+		wordMap[name] = word
+	}
+
+	// Read memory cells
+	for i := uint32(0); i < memPtr; i++ {
+		// Read type
+		var cellType byte
+		if err := binary.Read(file, binary.LittleEndian, &cellType); err != nil {
+			return err
+		}
+
+		switch cellType {
+		case 0: // int
+			var value int32
+			if err := binary.Read(file, binary.LittleEndian, &value); err != nil {
+				return err
+			}
+			vm.memory[i] = int(value)
+		case 1: // word reference
+			// Read word name length
+			var nameLen uint16
+			if err := binary.Read(file, binary.LittleEndian, &nameLen); err != nil {
+				return err
+			}
+			// Read word name
+			nameBytes := make([]byte, nameLen)
+			if _, err := file.Read(nameBytes); err != nil {
+				return err
+			}
+			name := string(nameBytes)
+			// Look up the word
+			word, ok := wordMap[name]
+			if !ok {
+				return fmt.Errorf("word not found in dictionary: %s", name)
+			}
+			vm.memory[i] = word
+		case 2: // string
+			// Read string length
+			var strLen uint16
+			if err := binary.Read(file, binary.LittleEndian, &strLen); err != nil {
+				return err
+			}
+			// Read string
+			strBytes := make([]byte, strLen)
+			if _, err := file.Read(strBytes); err != nil {
+				return err
+			}
+			vm.memory[i] = string(strBytes)
+		case 3: // exit
+			vm.memory[i] = "EXIT"
+		default:
+			return fmt.Errorf("unknown cell type at memory location %d: %d", i, cellType)
+		}
+	}
+
+	// Update memory pointer
+	vm.memoryPointer = int(memPtr)
 
 	return nil
 }
@@ -1113,7 +1415,7 @@ func (vm *ForthVM) initPrimitives() {
 			fmt.Println("Error:", err)
 			return
 		}
-		num, err := strconv.Atoi(str)
+		num, err := strconv.Atoi(strings.TrimSpace(str))
 		if err != nil {
 			fmt.Println("Error converting string to number:", err)
 			vm.Push(0)
@@ -1300,6 +1602,41 @@ func (vm *ForthVM) initPrimitives() {
 			fmt.Printf("Error loading dictionary from %s: %v\n", filename, err)
 		} else {
 			fmt.Printf("Dictionary loaded from %s\n", filename)
+		}
+	})
+
+	// Binary dictionary save/load operations
+	vm.AddWord("save-dict-bin", func(vm *ForthVM) {
+		// Stack: ( filename -- )
+		// Saves the dictionary to the specified binary file
+		filename, err := vm.PopString()
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+
+		err = vm.SaveDictionaryBinary(filename)
+		if err != nil {
+			fmt.Printf("Error saving binary dictionary to %s: %v\n", filename, err)
+		} else {
+			fmt.Printf("Binary dictionary saved to %s\n", filename)
+		}
+	})
+
+	vm.AddWord("load-dict-bin", func(vm *ForthVM) {
+		// Stack: ( filename -- )
+		// Loads the dictionary from the specified binary file
+		filename, err := vm.PopString()
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+
+		err = vm.LoadDictionaryBinary(filename)
+		if err != nil {
+			fmt.Printf("Error loading binary dictionary from %s: %v\n", filename, err)
+		} else {
+			fmt.Printf("Binary dictionary loaded from %s\n", filename)
 		}
 	})
 
@@ -1529,8 +1866,12 @@ func main() {
 	fmt.Println("  s.s                              - Display string stack")
 	fmt.Println("Dictionary Save/Load:")
 	fmt.Println("  : double dup + ;                 - Define a new word")
-	fmt.Println("  s\" mydict.json\" save-dict      - Save dictionary to file")
-	fmt.Println("  s\" mydict.json\" load-dict      - Load dictionary from file")
+	fmt.Println("  s\" mydict.json\" save-dict      - Save dictionary to JSON file")
+	fmt.Println("  s\" mydict.json\" load-dict      - Load dictionary from JSON file")
+	fmt.Println("Binary Dictionary Save/Load:")
+	fmt.Println("  : square dup * ;                 - Define a new word")
+	fmt.Println("  s\" mydict.bin\" save-dict-bin   - Save dictionary to binary file")
+	fmt.Println("  s\" mydict.bin\" load-dict-bin   - Load dictionary from binary file")
 	fmt.Println("Type 'bye' to exit")
 
 	// Start the REPL
