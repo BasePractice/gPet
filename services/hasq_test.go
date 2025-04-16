@@ -1,10 +1,14 @@
 package services
 
-import "testing"
+import (
+	"testing"
+
+	"pet/hasqchain"
+)
 
 func TestHashQ_CreateKey(t *testing.T) {
 	tok := CreateToken([]byte("DATA"))
-	k := createKey(tok, "password")
+	k := hasqchain.CreateKey(tok, "password")
 	t.Log(k)
 }
 
